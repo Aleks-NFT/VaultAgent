@@ -1,0 +1,39 @@
+{
+  "name": "@vaultagent/mcp-server",
+  "version": "0.2.0",
+  "description": "VaultAgent MCP Server — execution-grade NFT vault liquidity for AI agents",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "vaultagent-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "viem": "^2.47.2",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp", "nftx", "nft", "liquidity", "web3", "defi", "ethereum", "ai-agent"
+  ],
+  "author": "Aleks-NFT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aleks-NFT/VaultAgent.git",
+    "directory": "packages/mcp-server"
+  }
+}
