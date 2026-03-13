@@ -115,7 +115,7 @@ Works with: Claude Code, Cursor, Windsurf, Cline, GitHub Copilot, Codex CLI, Goo
 | Network | Address | Status |
 |---------|---------|--------|
 | Sepolia | [`0x37d2ab...`](https://sepolia.etherscan.io/address/0x37d2ab607a2dc81b6c9224767ab234013de8bc28) | ✅ Verified |
-| Mainnet | [`0xd9f3eddf...`](https://etherscan.io/address/0xd9f3eddf463a06b89f022e2596f66fc495119f58) | ✅ Live |
+| Mainnet | [`0xd9f3eddf...`](https://etherscan.io/address/0xd9f3eddf463a06b89f022e2596f66fc495119f58) | ✅ Verified |
 
 ## Fee Model
 
