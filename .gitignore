@@ -3,3 +3,6 @@ dist/
 .env
 *.env
 .DS_Store
+deployments/
+cache/
+artifacts/
