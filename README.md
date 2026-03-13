@@ -115,7 +115,7 @@ Works with: Claude Code, Cursor, Windsurf, Cline, GitHub Copilot, Codex CLI, Goo
 | Network | Address | Status |
 |---------|---------|--------|
 | Sepolia | [`0x37d2ab...`](https://sepolia.etherscan.io/address/0x37d2ab607a2dc81b6c9224767ab234013de8bc28) | ✅ Verified |
-| Mainnet | *Phase 2A — deploy pending* | ⏳ |
+| Mainnet | [`0xd9f3eddf...`](https://etherscan.io/address/0xd9f3eddf463a06b89f022e2596f66fc495119f58) | ✅ Live |
 
 ## Fee Model
 
@@ -130,7 +130,7 @@ Works with: Claude Code, Cursor, Windsurf, Cline, GitHub Copilot, Codex CLI, Goo
 ## Roadmap
 
 - [x] Phase 1 — Testnet: MCP server + FeeWrapper on Sepolia
-- [ ] Phase 2A — Mainnet Read-Only: deploy + first public announcement
+- [x] Phase 2A — Mainnet Read-Only: deploy + first public announcement
 - [ ] Phase 2B — Gated Write: execute tools + design partners
 - [ ] Phase 2C — Public Write: open access
 - [ ] Phase 3 — SKILL.md distribution + Hosted API ($99–499/mo, x402/USDC)
