@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 /**
  * @title VaultAgentFeeWrapper
- * @notice On-chain router for NFTX V3 operations with VaultAgent fee (0.25%)
- * @dev Phase 1: mint + random redeem + swap routing with fee collection
- *
- * Flow:
- *   User → VaultAgentFeeWrapper → NFTXVaultUpgradeableV3
- *   Fee (0.25%) is collected in ETH before forwarding to NFTX
- *
- * Deployed on: Ethereum Mainnet
- * NFTX V3 Vault Factory: 0xC255335bc5aBd6928063F5788a5E420554858f01
+ * @notice Wrapper contract that routes NFT operations through NFTX vaults
+ *         and collects a small fee (0.25% by default) for VaultAgent.
+ * @dev Phase 2 — write tools: mint, redeem, swap via NFTX V3
+ *      v1.1.0 — added emergency pause (kill-switch)
  */
 
 interface INFTXVault {
@@ -34,108 +29,115 @@ interface INFTXVault {
         uint256 wethAmount,
         bool forceFees
     ) external payable returns (uint256[] memory swappedIds);
-
-    function vaultFees()
-        external
-        view
-        returns (
-            uint256 mintFee,
-            uint256 redeemFee,
-            uint256 swapFee
-        );
 }
 
 interface IERC721 {
     function setApprovalForAll(address operator, bool approved) external;
-    function transferFrom(address from, address to, uint256 tokenId) external;
     function isApprovedForAll(address owner, address operator) external view returns (bool);
+    function transferFrom(address from, address to, uint256 tokenId) external;
 }
 
 interface IERC20 {
     function transfer(address to, uint256 amount) external returns (bool);
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
     function balanceOf(address account) external view returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool);
 }
 
 contract VaultAgentFeeWrapper {
-    // ─── State ────────────────────────────────────────────────────────────────
+
+    // ============================
+    // State
+    // ============================
 
     address public owner;
     address public feeRecipient;
+    uint256 public feeBps;             // basis points: 25 = 0.25%
+    uint256 public constant MAX_FEE_BPS = 100; // max 1%
 
-    /// @notice VaultAgent fee in basis points (25 = 0.25%)
-    uint256 public feeBps = 25;
+    bool public paused;                // kill-switch: true = all executions blocked
 
-    /// @notice Maximum fee cap (1% = 100 bps)
-    uint256 public constant MAX_FEE_BPS = 100;
+    // ============================
+    // Events
+    // ============================
 
-    // ─── Events ───────────────────────────────────────────────────────────────
+    event FeesCollected(address indexed token, uint256 amount);
+    event FeeUpdated(uint256 oldFeeBps, uint256 newFeeBps);
+    event FeeRecipientUpdated(address oldRecipient, address newRecipient);
+    event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
-    event MintRouted(
-        address indexed user,
+    event Paused(address indexed by);
+    event Unpaused(address indexed by);
+
+    event MintExecuted(
         address indexed vault,
+        address indexed user,
         uint256[] tokenIds,
         uint256 vTokensMinted,
-        uint256 feeCollectedWei
+        uint256 feeCollected
     );
 
-    event RedeemRouted(
-        address indexed user,
+    event RedeemExecuted(
         address indexed vault,
+        address indexed user,
         uint256 numNFTs,
-        uint256[] specificIds,
-        uint256 feeCollectedWei
+        uint256[] redeemedIds,
+        uint256 feeCollected
     );
 
-    event SwapRouted(
-        address indexed user,
+    event SwapExecuted(
         address indexed vault,
-        uint256[] depositIds,
-        uint256[] receiveIds,
-        uint256 feeCollectedWei
+        address indexed user,
+        uint256[] tokenIds,
+        uint256[] swappedIds,
+        uint256 feeCollected
     );
 
-    event FeeUpdated(uint256 oldBps, uint256 newBps);
-    event FeeRecipientUpdated(address oldRecipient, address newRecipient);
-    event FeesWithdrawn(address recipient, uint256 amount);
-
-    // ─── Modifiers ────────────────────────────────────────────────────────────
+    // ============================
+    // Modifiers
+    // ============================
 
     modifier onlyOwner() {
         require(msg.sender == owner, "VaultAgent: not owner");
         _;
     }
 
-    // ─── Constructor ──────────────────────────────────────────────────────────
-
-    constructor(address _feeRecipient) {
-        require(_feeRecipient != address(0), "VaultAgent: zero address");
-        owner = msg.sender;
-        feeRecipient = _feeRecipient;
+    modifier whenNotPaused() {
+        require(!paused, "VaultAgent: contract is paused");
+        _;
     }
 
-    // ─── Core: Mint ───────────────────────────────────────────────────────────
+    // ============================
+    // Constructor
+    // ============================
+
+    constructor(address _feeRecipient, uint256 _feeBps) {
+        require(_feeRecipient != address(0), "VaultAgent: zero fee recipient");
+        require(_feeBps <= MAX_FEE_BPS, "VaultAgent: fee too high");
+
+        owner = msg.sender;
+        feeRecipient = _feeRecipient;
+        feeBps = _feeBps;
+        paused = false;
+    }
+
+    // ============================
+    // Core: Mint (NFT → vToken)
+    // ============================
 
     /**
-     * @notice Deposit NFTs into NFTX vault via VaultAgent router
-     * @dev Collects 0.25% fee, then calls vault.mint()
-     *      User must approve this contract on the NFT collection first
-     *
-     * @param vault        NFTX vault address
-     * @param nftContract  NFT collection contract
-     * @param tokenIds     TokenIds to deposit
+     * @notice Deposit NFTs into NFTX vault, collect VaultAgent fee from vTokens.
+     * @dev Blocked when paused. Agent must simulate first, then call with user confirm.
+     * @param vault       NFTX vault address
+     * @param nftContract NFT contract address
+     * @param tokenIds    Token IDs to mint
      */
-    function mintViaWrapper(
+    function mint(
         address vault,
         address nftContract,
         uint256[] calldata tokenIds
-    ) external payable returns (uint256 vTokensMinted) {
-        require(tokenIds.length > 0, "VaultAgent: no tokenIds");
-        require(vault != address(0), "VaultAgent: zero vault");
-
-        // Collect VaultAgent fee from msg.value
-        uint256 ourFee = _calculateFee(msg.value);
-        uint256 amountForNFTX = msg.value - ourFee;
+    ) external payable whenNotPaused returns (uint256 vTokensMinted) {
+        require(tokenIds.length > 0, "VaultAgent: no tokens");
 
         // Transfer NFTs from user to this contract
         for (uint256 i = 0; i < tokenIds.length; i++) {
@@ -147,143 +149,191 @@ contract VaultAgentFeeWrapper {
             IERC721(nftContract).setApprovalForAll(vault, true);
         }
 
-        // Execute mint on NFTX
-        uint256[] memory amounts = new uint256[](0); // ERC-721 — no amounts
-        vTokensMinted = INFTXVault(vault).mint{value: amountForNFTX}(
-            tokenIds,
-            amounts
-        );
+        uint256[] memory amounts = new uint256[](0);
 
-        // Send vTokens to user
-        IERC20(vault).transfer(msg.sender, vTokensMinted);
+        // Mint vTokens via NFTX vault
+        vTokensMinted = INFTXVault(vault).mint{value: msg.value}(tokenIds, amounts);
 
-        // Collect our fee (stays in contract, withdrawn via withdrawFees)
-        emit MintRouted(msg.sender, vault, tokenIds, vTokensMinted, ourFee);
+        // Calculate and collect fee from vTokens
+        uint256 fee = (vTokensMinted * feeBps) / 10000;
+        uint256 userAmount = vTokensMinted - fee;
+
+        if (fee > 0) {
+            IERC20(vault).transfer(feeRecipient, fee);
+            emit FeesCollected(vault, fee);
+        }
+
+        IERC20(vault).transfer(msg.sender, userAmount);
+
+        emit MintExecuted(vault, msg.sender, tokenIds, vTokensMinted, fee);
     }
 
-    // ─── Core: Random Redeem ──────────────────────────────────────────────────
+    // ============================
+    // Core: Redeem (vToken → NFT)
+    // ============================
 
     /**
-     * @notice Redeem random NFT(s) from vault via VaultAgent router
-     * @dev User sends vTokens + ETH for fees. We take our cut, forward rest to NFTX.
-     *
-     * @param vault     NFTX vault address
-     * @param numNFTs   Number of random NFTs to redeem
-     * @param wethAmount WETH amount for fees (if using WETH payment)
+     * @notice Redeem NFTs from NFTX vault (random or targeted).
+     * @dev Blocked when paused. Agent must simulate first, then call with user confirm.
+     *      maxPremiumBps: slippage guard — reverts if current premium exceeds this limit.
+     * @param vault          NFTX vault address
+     * @param numNFTs        Number of NFTs to redeem
+     * @param specificIds    Specific token IDs (empty = random)
+     * @param vTokenAmount   Total vToken amount to spend (including NFTX fees)
+     * @param maxPremiumBps  Max acceptable premium in bps (0 = no check, e.g. 5000 = 50%)
      */
-    function redeemRandomViaWrapper(
+    function redeem(
         address vault,
         uint256 numNFTs,
-        uint256 wethAmount
-    ) external payable returns (uint256[] memory redeemedIds) {
-        require(numNFTs > 0, "VaultAgent: numNFTs = 0");
+        uint256[] calldata specificIds,
+        uint256 vTokenAmount,
+        uint256 maxPremiumBps
+    ) external payable whenNotPaused returns (uint256[] memory redeemedIds) {
+        require(numNFTs > 0, "VaultAgent: zero NFTs");
 
-        // Transfer vTokens from user (numNFTs * 1e18)
-        uint256 vTokenAmount = numNFTs * 1e18;
-        IERC20(vault).transferFrom(msg.sender, address(this), vTokenAmount);
+        // Premium safety check: if maxPremiumBps set, validate msg.value does not exceed it
+        // Targeted redeems cost premium ETH. maxPremiumBps guards against overpaying.
+        if (maxPremiumBps > 0 && specificIds.length > 0) {
+            uint256 maxPremiumEth = (vTokenAmount * maxPremiumBps) / 10000;
+            require(msg.value <= maxPremiumEth, "VaultAgent: premium exceeds max");
+        }
 
-        // Calculate our fee
-        uint256 ourFee = _calculateFee(msg.value);
-        uint256 amountForNFTX = msg.value - ourFee;
+        // Calculate VaultAgent fee
+        uint256 fee = (vTokenAmount * feeBps) / 10000;
+        uint256 totalRequired = vTokenAmount + fee;
 
-        // Execute random redeem on NFTX
-        uint256[] memory specificIds = new uint256[](0); // empty = random
-        redeemedIds = INFTXVault(vault).redeem{value: amountForNFTX}(
+        // Pull total vTokens from user
+        IERC20(vault).transferFrom(msg.sender, address(this), totalRequired);
+
+        // Collect fee
+        if (fee > 0) {
+            IERC20(vault).transfer(feeRecipient, fee);
+            emit FeesCollected(vault, fee);
+        }
+
+        // Approve vault
+        IERC20(vault).approve(vault, vTokenAmount);
+
+        // Execute redeem
+        redeemedIds = INFTXVault(vault).redeem{value: msg.value}(
             numNFTs,
             specificIds,
-            wethAmount,
+            0,
             false
         );
 
-        // Send NFTs to user
-        // Note: vault sends NFTs directly to msg.sender in V3 — verify in prod
-
-        emit RedeemRouted(msg.sender, vault, numNFTs, specificIds, ourFee);
+        emit RedeemExecuted(vault, msg.sender, numNFTs, redeemedIds, fee);
     }
 
-    // ─── Core: Targeted Redeem ────────────────────────────────────────────────
+    // ============================
+    // Core: Swap (NFT ↔ NFT)
+    // ============================
 
     /**
-     * @notice Redeem specific NFT(s) from vault (with premium fee)
-     * @dev Premium can be up to 500% in first seconds — always check get_premium_window first!
+     * @notice Swap NFTs within an NFTX vault.
+     * @dev Blocked when paused. Agent must simulate first, then call with user confirm.
+     * @param vault           NFTX vault address
+     * @param nftContract     NFT contract address
+     * @param tokenIds        Token IDs to swap in
+     * @param specificIds     Specific token IDs to receive (empty = random)
+     * @param swapFeeVTokens  vToken amount for swap fees
      */
-    function redeemTargetedViaWrapper(
+    function swap(
         address vault,
+        address nftContract,
+        uint256[] calldata tokenIds,
         uint256[] calldata specificIds,
-        uint256 wethAmount
-    ) external payable returns (uint256[] memory redeemedIds) {
-        require(specificIds.length > 0, "VaultAgent: no targetIds");
+        uint256 swapFeeVTokens
+    ) external payable whenNotPaused returns (uint256[] memory swappedIds) {
+        require(tokenIds.length > 0, "VaultAgent: no tokens");
 
-        // Transfer vTokens from user
-        uint256 vTokenAmount = specificIds.length * 1e18;
-        IERC20(vault).transferFrom(msg.sender, address(this), vTokenAmount);
+        // Transfer NFTs in
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            IERC721(nftContract).transferFrom(msg.sender, address(this), tokenIds[i]);
+        }
 
-        // Calculate our fee (applied on ETH sent for premium)
-        uint256 ourFee = _calculateFee(msg.value);
-        uint256 amountForNFTX = msg.value - ourFee;
+        if (!IERC721(nftContract).isApprovedForAll(address(this), vault)) {
+            IERC721(nftContract).setApprovalForAll(vault, true);
+        }
 
-        // Execute targeted redeem (premium paid from amountForNFTX)
-        redeemedIds = INFTXVault(vault).redeem{value: amountForNFTX}(
-            specificIds.length,
+        // Calculate and collect fee
+        uint256 fee = (swapFeeVTokens * feeBps) / 10000;
+        if (swapFeeVTokens > 0) {
+            IERC20(vault).transferFrom(msg.sender, address(this), swapFeeVTokens + fee);
+            if (fee > 0) {
+                IERC20(vault).transfer(feeRecipient, fee);
+                emit FeesCollected(vault, fee);
+            }
+            IERC20(vault).approve(vault, swapFeeVTokens);
+        }
+
+        uint256[] memory amounts = new uint256[](0);
+
+        swappedIds = INFTXVault(vault).swap{value: msg.value}(
+            tokenIds,
+            amounts,
             specificIds,
-            wethAmount,
+            0,
             false
         );
 
-        emit RedeemRouted(msg.sender, vault, specificIds.length, specificIds, ourFee);
+        emit SwapExecuted(vault, msg.sender, tokenIds, swappedIds, fee);
     }
 
-    // ─── Fee Calculation ──────────────────────────────────────────────────────
+    // ============================
+    // Kill-switch (Emergency)
+    // ============================
 
     /**
-     * @notice Calculate VaultAgent fee from ETH amount
-     * @param amount ETH amount in wei
-     * @return fee Fee amount in wei
+     * @notice Pause all executions (mint/redeem/swap). Read-only tools unaffected.
+     * @dev Use in emergencies: exploit detected, suspicious activity, pre-upgrade freeze.
      */
-    function _calculateFee(uint256 amount) internal view returns (uint256 fee) {
-        fee = (amount * feeBps) / 10_000;
+    function pause() external onlyOwner {
+        require(!paused, "VaultAgent: already paused");
+        paused = true;
+        emit Paused(msg.sender);
     }
 
     /**
-     * @notice Public fee quote — use in simulation
-     * @param ethAmountWei Transaction value in wei
-     * @return feeWei Our fee in wei
-     * @return netWei Amount forwarded to NFTX after fee
+     * @notice Resume all executions.
      */
-    function quoteFee(uint256 ethAmountWei)
-        external
-        view
-        returns (uint256 feeWei, uint256 netWei)
-    {
-        feeWei = _calculateFee(ethAmountWei);
-        netWei = ethAmountWei - feeWei;
+    function unpause() external onlyOwner {
+        require(paused, "VaultAgent: not paused");
+        paused = false;
+        emit Unpaused(msg.sender);
     }
 
-    // ─── Admin ────────────────────────────────────────────────────────────────
+    // ============================
+    // Admin
+    // ============================
 
-    function setFeeBps(uint256 newFeeBps) external onlyOwner {
-        require(newFeeBps <= MAX_FEE_BPS, "VaultAgent: fee too high");
-        emit FeeUpdated(feeBps, newFeeBps);
-        feeBps = newFeeBps;
+    function setFeeBps(uint256 _feeBps) external onlyOwner {
+        require(_feeBps <= MAX_FEE_BPS, "VaultAgent: fee too high");
+        emit FeeUpdated(feeBps, _feeBps);
+        feeBps = _feeBps;
     }
 
-    function setFeeRecipient(address newRecipient) external onlyOwner {
-        require(newRecipient != address(0), "VaultAgent: zero address");
-        emit FeeRecipientUpdated(feeRecipient, newRecipient);
-        feeRecipient = newRecipient;
-    }
-
-    function withdrawFees() external {
-        uint256 balance = address(this).balance;
-        require(balance > 0, "VaultAgent: nothing to withdraw");
-        (bool ok, ) = feeRecipient.call{value: balance}("");
-        require(ok, "VaultAgent: transfer failed");
-        emit FeesWithdrawn(feeRecipient, balance);
+    function setFeeRecipient(address _feeRecipient) external onlyOwner {
+        require(_feeRecipient != address(0), "VaultAgent: zero address");
+        emit FeeRecipientUpdated(feeRecipient, _feeRecipient);
+        feeRecipient = _feeRecipient;
     }
 
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "VaultAgent: zero address");
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
+    }
+
+    // Emergency: withdraw stuck ETH
+    function withdrawETH() external onlyOwner {
+        payable(owner).transfer(address(this).balance);
+    }
+
+    // Emergency: withdraw stuck tokens
+    function withdrawToken(address token) external onlyOwner {
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        IERC20(token).transfer(owner, balance);
     }
 
     receive() external payable {}
