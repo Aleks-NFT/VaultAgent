@@ -25,7 +25,7 @@ AgentVault is a three-layer protocol that lets AI agents safely interact with NF
 │  Layer 2: Stable Rail (V2 — Hackathon MVP)      │
 │  ─ USDT quote, simulate, execute, settle        │
 │  ─ MCP Server + x402 micropayments              │
-│  ─ ERC-8004 identity + trust-aware routing       │
+│  ─ ERC-8004 identity + trust-aware routing      │
 ├─────────────────────────────────────────────────┤
 │  Layer 1: Execution Engine (V1 — Live)          │
 │  ─ VaultAgentFeeWrapper.sol (0.25% fee)         │
@@ -234,7 +234,7 @@ AgentVault bridges this gap: **stablecoin-native execution for NFT liquidity**, 
 ## Links
 
 - 🐦 Twitter: [@FirstNFT](https://twitter.com/FirstNFT)
-- 💬 Telegram: [NFTxAI UNITED PEOPLE](https://t.me/KyivNFT)
+- 💬 Telegram: Aleks_(https://t.me/time4web3)
 - 📰 News: [NFT Times](https://t.me/NFTtimes)
 - 🏗️ DeDeals (V3 Heritage): [github.com/Aleks-NFT/DegenDeals](https://github.com/Aleks-NFT/DegenDeals)
 - 🔍 Hackathon: [The Synthesis](https://synthesis.md)
