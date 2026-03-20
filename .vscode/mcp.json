@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "agentvault": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["tsx", "/workspaces/AgentVault/mcp-server/server.ts"],
+      "env": { "ETH_RPC_URL": "https://ethereum-rpc.publicnode.com" }
+    }
+  }
+}
