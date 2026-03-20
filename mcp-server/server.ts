@@ -3,12 +3,13 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { quoteInUsdt } from "./tools/quote_in_usdt";
 import { simulateStableRoute } from "./tools/simulate_stable_route";
+import { scanPremiumInUsd } from "./tools/scan_premium_in_usd";
 
-const server = new McpServer({ name: "AgentVault", version: "0.1.0" });
+const server = new McpServer({ name: "AgentVault", version: "0.2.0" });
 
 server.tool(
   "quote_in_usdt",
-  "Get USDT-denominated quote for NFTX vault mint/redeem. Returns fee breakdown, route explanation and guards.",
+  "Get USDT-denominated quote for NFTX vault mint/redeem. Returns live ETH price, fee breakdown, expected vault tokens, route explanation and guards.",
   {
     vault_id: z.enum(["vMILADY", "vPUNK", "vDEATH"]),
     direction: z.enum(["mint", "redeem"]),
@@ -23,7 +24,7 @@ server.tool(
 
 server.tool(
   "simulate_stable_route",
-  "Simulate full execution path for USDT→NFT vault operation. Returns step-by-step route, gas estimate, policy checks and PROCEED/WARN/ABORT recommendation.",
+  "Simulate full step-by-step execution path for USDT→NFT vault operation. Returns route steps, gas estimate in USD, policy checks and PROCEED/WARN/ABORT recommendation.",
   {
     vault_id: z.enum(["vMILADY", "vPUNK", "vDEATH"]),
     direction: z.enum(["mint", "redeem"]),
@@ -36,6 +37,18 @@ server.tool(
   })
 );
 
+server.tool(
+  "scan_premium_in_usd",
+  "Scan all NFTX vaults for premium windows. Returns BUY/NEUTRAL/EXPENSIVE signals, arbitrage opportunity in USDT, and best entry recommendation. Use before quoting to find optimal entry.",
+  {
+    max_premium_pct: z.number().optional().describe("Max acceptable premium % (default 2.0)"),
+    min_arb_usdt: z.number().optional().describe("Min arb opportunity in USDT to flag (default 50)"),
+  },
+  async (input) => ({
+    content: [{ type: "text", text: JSON.stringify(await scanPremiumInUsd(input), null, 2) }]
+  })
+);
+
 const transport = new StdioServerTransport();
 server.connect(transport);
-console.error("AgentVault MCP server started ✅");
+console.error("AgentVault MCP v0.2.0 started ✅ — 3 tools: quote_in_usdt, simulate_stable_route, scan_premium_in_usd");
