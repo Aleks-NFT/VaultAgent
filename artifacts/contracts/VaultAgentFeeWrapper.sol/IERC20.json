@@ -7,6 +7,30 @@
       "inputs": [
         {
           "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
           "name": "account",
           "type": "address"
         }
@@ -82,5 +106,5 @@
   "deployedLinkReferences": {},
   "immutableReferences": {},
   "inputSourceName": "project/contracts/VaultAgentFeeWrapper.sol",
-  "buildInfoId": "solc-0_8_28-f6fcda38d311f9e824c82af70a86c01ff7e96c2d"
+  "buildInfoId": "solc-0_8_28-3fff7a44174c6d7dfcbaa3d80e448b26b37bc47d"
 }

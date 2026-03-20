@@ -19,6 +19,7 @@
     "@nomicfoundation/hardhat-toolbox-viem": "^5.0.3",
     "@types/node": "^22.19.15",
     "dotenv": "^17.3.1",
+    "ethers": "^6.16.0",
     "hardhat": "^3.1.12",
     "typescript": "~5.8.0",
     "viem": "^2.47.2"
@@ -26,7 +27,17 @@
   "dependencies": {
     "zod": "^3.25.76"
   },
-  "keywords": ["mcp", "nftx", "nft", "liquidity", "web3", "defi", "ethereum", "ai-agent", "model-context-protocol"],
+  "keywords": [
+    "mcp",
+    "nftx",
+    "nft",
+    "liquidity",
+    "web3",
+    "defi",
+    "ethereum",
+    "ai-agent",
+    "model-context-protocol"
+  ],
   "author": "Aleks-NFT",
   "license": "MIT",
   "repository": {
