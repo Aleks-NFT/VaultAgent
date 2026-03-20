@@ -1,137 +1,244 @@
-# VaultAgent
+# AgentVault
 
-**Universal AI execution layer for NFT vault liquidity**
+[![GitHub stars](https://img.shields.io/github/stars/Aleks-NFT/AgentVault?style=flat-square)](https://github.com/Aleks-NFT/AgentVault/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://github.com/Aleks-NFT/AgentVault/blob/main/LICENSE)
+[![MCP](https://img.shields.io/badge/MCP-compatible-blue?style=flat-square)](https://modelcontextprotocol.io)
+[![ERC-8004](https://img.shields.io/badge/ERC--8004-integrated-orange?style=flat-square)](https://8004scan.io)
+[![Synthesis](https://img.shields.io/badge/Synthesis-2026-green?style=flat-square)](https://synthesis.md)
 
-> The first MCP server that gives AI agents safe, verifiable access to $15.96M in locked NFT vault liquidity on Ethereum Mainnet.
+**Stablecoin-native execution infrastructure for the agentic economy.**
 
-## The Problem
+> Agents think in dollars. NFT markets speak ETH.
+> AgentVault translates.
 
-NFTX V3 holds **\$15.96M TVL** in live Ethereum contracts. Its UI was shut down January 31, 2026. The liquidity is trapped — no interface, no API, no agentic access.
+---
 
-AI agents have no safe way to move NFT liquidity on-chain: no spend controls, no simulation layer, no verifiable on-chain receipts.
+## What is AgentVault?
 
-## The Solution
+AgentVault is a three-layer protocol that lets AI agents safely interact with NFT liquidity using stablecoins (USDT/USDC), without manual ETH management:
 
-VaultAgent is a 3-layer infrastructure stack:
+```
+┌─────────────────────────────────────────────────┐
+│  Layer 3: AgentHUB Console (UI & AgentOps)      │
+│  ─ monitor, approve/deny, alerting, trust gate  │
+├─────────────────────────────────────────────────┤
+│  Layer 2: Stable Rail (V2 — Hackathon MVP)      │
+│  ─ USDT quote, simulate, execute, settle        │
+│  ─ MCP Server + x402 micropayments              │
+│  ─ ERC-8004 identity + trust-aware routing       │
+├─────────────────────────────────────────────────┤
+│  Layer 1: Execution Engine (V1 — Live)          │
+│  ─ VaultAgentFeeWrapper.sol (0.25% fee)         │
+│  ─ NFTX V3 mint / redeem / swap                 │
+│  ─ Deployed on Sepolia + Mainnet                │
+└─────────────────────────────────────────────────┘
+```
 
-    Claude / OpenClaw / Any AI Agent
-             |  MCP (stdio)
-             v
-    VaultAgent MCP Server (TypeScript)
-      - Intelligence: 7 read/write tools
-      - Safety: Policy Engine + simulation
-      - Routing: best path across protocols
-             |
-             v
-    VaultAgentFeeWrapper.sol
-      - Fee: 0.25% base / 0.10% discounted
-      - Guards: maxPremiumBps + pause()
-      - Receipts: FeeCollected on every tx
-             |
-             v
-    NFTX V3 Protocol (\$15.96M TVL)
+---
 
-## Autonomous Agent Demo
+## Evolution
 
-Full decision loop — no human input required:
+This project grew from a single NFTX interface into a full execution stack for the agentic economy:
 
-    npx ts-node demo/vault-agent-demo.ts
+| Phase | What | Status |
+|-------|------|--------|
+| **V1** — VaultAgent | NFTX execution engine + MCP Server + FeeWrapper contract | ✅ Live (Sepolia + Mainnet) |
+| **V2** — AgentVault Stable Rail | USDT-denominated operations + ERC-8004 trust + x402 payments | 🔨 Building (Synthesis hackathon) |
+| **V3** — AgentVault + DeDeals | Settlement layer: Deal NFTs, escrow, agent employment, affiliate network | 📋 Roadmap |
 
-    [STEP 1] discover  -> list_vaults: found PUNK vault, TVL 847 ETH
-    [STEP 2] plan      -> get_premium_window: Dutch auction at 2.1%
-    [STEP 3] validate  -> simulate_mint: cost 0.08 ETH, policy OK
-    [STEP 4] execute   -> execute_mint: TX 0xabc... submitted
-    [STEP 5] verify    -> FeeCollected event confirmed on-chain
+> **Heritage**: V3 settlement layer is powered by [DegenDeals Protocol](https://github.com/Aleks-NFT/DegenDeals) — our 2024 ETHKyiv project (deployed on Optimism Mainnet), now repurposed for agent-to-agent commerce. See [DeDeals Integration](docs/DEDEALS-INTEGRATION.md).
 
-    Human confirmations required: 0
-    Policy guardrails: enforced on-chain
+---
 
-## MCP Tools
+## Architecture
 
-### Phase 1 — Read & Simulate (live)
+```
+Claude / OpenClaw / ElizaOS / Any MCP-compatible agent
+         │
+         ▼  MCP (stdio) + x402 micropayments ($0.001/query)
+AgentVault MCP Server (TypeScript)
+         │
+    ┌────┴────────────────────────────────┐
+    │         V2: Stable Rail              │
+    │                                      │
+    │  quote_in_usdt     → USD price       │
+    │  simulate_stable   → route preview   │
+    │  mint_from_usdt    → USDT→WETH→NFT   │
+    │  redeem_to_usdt    → NFT→WETH→USDT   │
+    │  scan_premium_usd  → arb scanner     │
+    │  settle_to_stable  → net settlement  │
+    │                                      │
+    │  Policy Engine:                      │
+    │  ├── Chainlink ETH/USD oracle guard  │
+    │  ├── maxSlippage / maxPremium caps   │
+    │  ├── Collection whitelist            │
+    │  └── ERC-8004 trust-gate             │
+    └────┬────────────────────────────────┘
+         │
+    ┌────┴────────────────────────────────┐
+    │         V1: Execution Engine         │
+    │                                      │
+    │  list_vaults       → browse vaults   │
+    │  get_vault_info    → details + fees  │
+    │  get_premium_window → Dutch auction  │
+    │  simulate_mint     → pre-flight      │
+    │  execute_mint      → NFT → vToken    │
+    │  execute_redeem    → vToken → NFT    │
+    │  execute_swap      → NFT ↔ NFT      │
+    └────┬────────────────────────────────┘
+         │
+         ▼  on-chain
+    VaultAgentFeeWrapper.sol (0.25% fee)
+    StableVaultRouter.sol   (V2 — stable rail)
+         │
+         ▼
+    NFTX V3  →  Flayer (coming)  →  ...
+```
 
-| Tool | Description |
-|------|-------------|
-| list_vaults | Browse active NFTX vaults with TVL |
-| get_vault_info | Vault details: NFT count, fees, vToken address |
-| get_premium_window | Dutch auction premium analysis for targeted redeem |
-| simulate_mint | Pre-flight: ownership, approval, fee breakdown |
+---
 
-### Phase 2 — Execute (Mainnet live)
+## Three Operating Modes
 
-| Tool | Description |
-|------|-------------|
-| execute_mint | Deposit NFT -> vToken via FeeWrapper |
-| execute_redeem_targeted | Specific NFT <- vToken + premium with maxPremiumBps guard |
-| execute_swap | NFT <-> NFT swap within vault |
+| Mode | What happens | Best for |
+|------|-------------|----------|
+| **USD Quote Mode** | Show all prices in USDT. No execution. | Discovery, dashboards, B2B API |
+| **Stable Entry/Exit** | Accept USDT → convert → execute → return USDT | Retail one-shot, DAO treasury |
+| **Netted Agent Mode** | Agent holds WETH working balance, settles in USDT periodically | Frequent traders, arb bots |
 
-## Quick Start
-
-    # OpenClaw skill
-    npx skills add Aleks-NFT/VaultAgent
-
-    # From source
-    git clone https://github.com/Aleks-NFT/VaultAgent
-    cd VaultAgent/packages/mcp-server
-    npm install && npm run build
-    cp ../../.env.example .env
-    npm run dev
-
-## Safety Guardrails
-
-| Layer | Mechanism |
-|-------|-----------|
-| MCP | Policy Engine: spend limits, simulation required before execute |
-| Contract | maxPremiumBps: reverts if premium exceeds threshold |
-| Contract | pause() / unpause(): emergency kill-switch |
-| Contract | nonReentrant: reentrancy protection on all core functions |
+---
 
 ## Fee Model
 
-Base fee: 0.25% (25 bps) on all transactions via FeeWrapper.sol.
+| Fee | Amount | Description |
+|-----|--------|-------------|
+| AgentVault execution | 0.25% (25 bps) | Auto-collected by FeeWrapper |
+| Integrator fee (DEX) | 0.10-0.15% | 1inch/LI.FI routing |
+| Stable convenience | 0.10% | USD abstraction layer |
+| NFTX protocol | 0.5-2% | Vault-dependent, passed through |
+| **Total round-trip** | **~0.60-0.75%** | Conservative estimate |
 
-Multi-Token Discount (Phase 2.5):
+> Intelligence layer (x402): $0.001 USDC per API query for simulation/quotes.
+> Execution layer (smart contract): % fee on actual trades.
 
-| Token | Threshold | Fee |
-|-------|-----------|-----|
-| None | - | 0.25% |
-| PNKSTR (NFTStrategy.fun) | >= 10,000 | 0.10% |
-| DEATHSTR | >= 1,000,000 | 0.10% |
+---
 
 ## Deployed Contracts
 
-| Network | Address |
-|---------|---------|
-| Ethereum Mainnet (verified) | 0xd9f3eddf463a06b89f022e2596f66fc495119f58 |
-| Sepolia Testnet (verified) | 0x37d2ab607a2dc81b6c9224767ab234013de8bc28 |
+| Network | Contract | Address | Status |
+|---------|----------|---------|--------|
+| Sepolia | VaultAgentFeeWrapper (V1) | [`0x37d2ab...`](https://sepolia.etherscan.io/address/0x37d2ab607a2dc81b6c9224767ab234013de8bc28) | ✅ Verified |
+| Mainnet | VaultAgentFeeWrapper (V1) | [`0xd9f3ed...`](https://etherscan.io/address/0xd9f3eddf463a06b89f022e2596f66fc495119f58) | ✅ Verified |
+| Base | StableVaultRouter (V2) | TBD | 🔨 Building |
 
-## Ecosystem
+---
 
-**NFTStrategy.fun** — Perpetual NFT Machines. VaultAgent identifies arbitrage windows between NFTStrategy listings (+20% floor) and NFTX vToken prices.
+## Quick Start
 
-**DeathSTR** — Lists NFTs ~20% below floor every 3 days. VaultAgent snipes discounted listings, mints vTokens, captures the spread atomically.
+```bash
+git clone https://github.com/Aleks-NFT/AgentVault.git
+cd AgentVault
+npm install
+cp .env.example .env
+# Edit .env: set ETH_RPC_URL
+npm run dev
+```
 
-    DeathSTR lists NFT at -20% floor
-        ->
-    VaultAgent snipes -> mint vToken in NFTX
-        ->
-    Sell vToken on AMM -> ~18% profit per tx
+### Install as Agent Skill
+
+```bash
+npx skillsadd Aleks-NFT/AgentVault
+```
+
+Or copy `skills/vault-agent/SKILL.md` to your agent's skills directory.
+
+Works with: Claude Code, Cursor, Windsurf, Cline, GitHub Copilot, Codex CLI, Goose, OpenClaw, ElizaOS, and 12+ MCP-compatible agents.
+
+---
+
+## ERC-8004 Integration
+
+AgentVault uses ERC-8004 as its identity and trust backbone:
+
+- **Identity**: Registered as an agent on Base via `npx create-8004-agent`
+- **Trust-gating**: Incoming agents checked against 8004scan 7-dimension trust score
+- **Discovery**: Listed in global agent registry (97K+ agents)
+- **Payments**: x402 micropayments for API access ($0.001 USDC/query)
+
+---
 
 ## Roadmap
 
-| Phase | Status | Description |
-|-------|--------|-------------|
-| Phase 1 | Done | Read tools + simulation |
-| Phase 2A | Done | Mainnet deploy + write tools |
-| Phase 2B | Active | Design partners + first on-chain tx |
-| Phase 2.5 | Planned | Multi-token fee discount + cross-protocol arb |
-| Phase 3 | Planned | OpenClaw distribution + hosted API |
-| Phase 4 | Planned | Flayer + Base + B2B SDK |
+### V2 — Synthesis Hackathon (March 2026) ← WE ARE HERE
+- [ ] StableVaultRouter.sol on Base
+- [ ] Stable Rail MCP tools (quote_in_usdt, mint_from_usdt, redeem_to_usdt)
+- [ ] ERC-8004 agent registration + trust-gate
+- [ ] AgentVault Console (lite monitoring UI)
+- [ ] x402 micropayments for intelligence layer
+- [ ] SKILL.md v2 with stable-denominated operations
+
+### V3 — Settlement Layer (Q2 2026)
+- [ ] DeDeals Protocol integration (Deal NFTs + ERC-6551 escrow)
+- [ ] Agent employment contracts (hire/escrow/KPI/dispute)
+- [ ] Affiliate NFT network for B2B agent distribution
+- [ ] Reputation-aware routing via 8004scan
+
+### V4 — Platform (Q3 2026)
+- [ ] Full AgentHUB terminal (Academy + Corporation + marketplace)
+- [ ] Flayer adapter (Uniswap V4) + multi-chain
+- [ ] DCA subscriptions for non-crypto users
+- [ ] DAO treasury automation
+
+---
+
+## Repository Structure
+
+```
+AgentVault/
+├── contracts/
+│   ├── v1/
+│   │   └── VaultAgentFeeWrapper.sol       # V1 — deployed, verified
+│   └── v2/
+│       └── StableVaultRouter.sol          # V2 — Synthesis hackathon
+├── packages/
+│   └── mcp-server/                        # MCP server (TypeScript)
+├── skills/
+│   └── vault-agent/
+│       └── SKILL.md                       # Agent skill (progressive disclosure)
+├── docs/
+│   ├── ARCHITECTURE.md                    # Full technical architecture
+│   ├── ROADMAP.md                         # Detailed roadmap
+│   └── DEDEALS-INTEGRATION.md             # V3 settlement layer plan
+├── scripts/
+├── test/
+├── .env.example
+├── hardhat.config.ts
+├── package.json
+└── README.md                              # ← You are here
+```
+
+---
+
+## The Thesis
+
+98.6% of AI agent payments are in USDC ([Circle, March 2026](https://www.circle.com)).
+NFT infrastructure still speaks ETH.
+
+AgentVault bridges this gap: **stablecoin-native execution for NFT liquidity**, built for agents, accessible to humans.
+
+- **V1** gave agents hands (execution)
+- **V2** gives agents a wallet that speaks their language (stablecoins)
+- **V3** gives agents contracts and employment (settlement)
+
+---
 
 ## Links
 
-- Twitter: @FirstNFT (https://x.com/FirstNFT)
-- Telegram: @KyivNFT (https://t.me/KyivNFT)
-- Synthesis Hackathon 2026: https://synthesis.md
-- ERC-8004 Identity on Base: https://basescan.org/tx/0x2bdad3e271461e3fab36168f7402f33ece90bf6aff9cd5dba5caba3031dc08ff
+- 🐦 Twitter: [@FirstNFT](https://twitter.com/FirstNFT)
+- 💬 Telegram: [NFTxAI UNITED PEOPLE](https://t.me/KyivNFT)
+- 📰 News: [NFT Times](https://t.me/NFTtimes)
+- 🏗️ DeDeals (V3 Heritage): [github.com/Aleks-NFT/DegenDeals](https://github.com/Aleks-NFT/DegenDeals)
+- 🔍 Hackathon: [The Synthesis](https://synthesis.md)
 
+---
+
+Built by [@FirstNFT](https://twitter.com/FirstNFT) | First NFT Agency
