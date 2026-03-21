@@ -14,7 +14,7 @@ app.use((_req, res, next) => {
   next();
 });
 
-const PAY_TO = process.env.WALLET_ADDRESS ?? "0x0000000000000000000000000000000000000000";
+const PAY_TO = process.env.WALLET_ADDRESS ?? "0x80A53D4b84F00EB331eda1D61042b2dc05fFA47d";
 const PORT   = process.env.PORT ?? process.env.HTTP_PORT ?? 4021;
 
 // x402 setup — Base Sepolia testnet
