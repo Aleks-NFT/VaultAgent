@@ -4,8 +4,8 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "npx tsx http-server.ts",
-    "healthcheckPath": "/health",
+    "startCommand": "npx tsx mcp-server/http-server.ts",
+    "healthcheckPath": "/",
     "restartPolicyType": "ON_FAILURE"
   }
 }
