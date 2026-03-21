@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["npm ci", "cd mcp-server && npm ci"]
+
+[start]
+cmd = "cd mcp-server && npx tsx http-server.ts"
