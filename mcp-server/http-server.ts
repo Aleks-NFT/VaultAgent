@@ -72,13 +72,12 @@ app.post("/scan", async (req, res) => {
 app.get("/", (_req, res) => {
   res.json({
     name: "AgentVault Intelligence API",
-    version: "0.3.0",
+    version: "0.4.0",
     x402: true,
     pricing: {
-      "POST /quote":         "$0.001 USDC",
+      "POST /quote": "$0.001 USDC",
       "POST /scan": "$0.001 USDC",
       "POST /scan/premium": "$0.001 USDC",
-      "POST /scan/premium":  "$0.001 USDC",
     },
     execution: "via MCP tools mint_from_usdt / redeem_to_usdt (0.65% round-trip)",
   });
@@ -88,7 +87,7 @@ app.get("/", (_req, res) => {
 app.get("/health", (_req, res) => {
   res.json({
     status: "ok",
-    version: "0.3.0",
+    version: "0.4.0",
     uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
   });
