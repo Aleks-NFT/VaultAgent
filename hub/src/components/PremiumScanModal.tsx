@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react';
 
-const PROD_URL = 'https://agentvault-mcp-production.up.railway.app';
+const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 export default function PremiumScanModal({ onData }: { onData: (data: any) => void }) {
   const [loading, setLoading] = useState(false);
@@ -10,7 +10,7 @@ export default function PremiumScanModal({ onData }: { onData: (data: any) => vo
   const scanPremium = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${PROD_URL}/scan/premium`, {
+      const res = await fetch(`${API_URL}/scan/premium`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ max_premium_pct: 1.0 }),
