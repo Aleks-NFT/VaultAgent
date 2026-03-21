@@ -22,6 +22,18 @@ const facilitator = new HTTPFacilitatorClient({ url: "https://x402.org/facilitat
 const resourceServer = new x402ResourceServer(facilitator)
   .register("eip155:84532", new ExactEvmScheme());
 
+
+// Free scan for internal dashboard (no x402) — MUST be before paymentMiddleware
+app.post("/scan/free", async (req, res) => {
+  const result = await scanPremiumInUsd(req.body ?? {});
+  res.json(result);
+});
+// Free premium scan for internal dashboard (no x402) — MUST be before paymentMiddleware
+app.post("/scan/premium/free", async (req, res) => {
+  const result = await scanPremiumInUsd(req.body ?? {});
+  res.json(result);
+});
+
 app.use(
   paymentMiddleware(
     {
