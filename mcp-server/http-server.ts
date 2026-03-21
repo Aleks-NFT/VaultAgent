@@ -15,7 +15,7 @@ app.use((_req, res, next) => {
 });
 
 const PAY_TO = process.env.WALLET_ADDRESS ?? "0x0000000000000000000000000000000000000000";
-const PORT   = process.env.HTTP_PORT ?? 4021;
+const PORT   = process.env.PORT ?? process.env.HTTP_PORT ?? 4021;
 
 // x402 setup — Base Sepolia testnet
 const facilitator = new HTTPFacilitatorClient({ url: "https://x402.org/facilitator" });
