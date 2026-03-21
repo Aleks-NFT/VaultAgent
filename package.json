@@ -8,8 +8,8 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace=packages/mcp-server",
-    "build": "npm run build --workspace=packages/mcp-server",
-    "start": "npm run start --workspace=packages/mcp-server",
+    "build": "echo build-skipped",
+    "start": "npx tsx http-server.ts",
     "typecheck": "npm run typecheck --workspace=packages/mcp-server",
     "compile": "npx hardhat compile",
     "deploy:sepolia": "npx hardhat run scripts/deploy.ts --network sepolia",
@@ -25,6 +25,8 @@
     "viem": "^2.47.2"
   },
   "dependencies": {
+    "node-fetch": "^3.3.2",
+    "node-telegram-bot-api": "^0.67.0",
     "zod": "^3.25.76"
   },
   "keywords": [
@@ -47,5 +49,10 @@
   "homepage": "https://github.com/Aleks-NFT/VaultAgent#readme",
   "bugs": {
     "url": "https://github.com/Aleks-NFT/VaultAgent/issues"
+  },
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
   }
 }
