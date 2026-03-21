@@ -85,6 +85,15 @@ app.get("/", (_req, res) => {
 });
 
 
+app.get("/health", (_req, res) => {
+  res.json({
+    status: "ok",
+    version: "0.3.0",
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Paid premium scan with custom thresholds
 app.post("/scan/premium", async (req, res) => {
   const result = await scanPremiumInUsd(req.body ?? {});
