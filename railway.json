@@ -1,10 +1,11 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS"
+    "builder": "NIXPACKS",
+    "nixpacksConfigPath": "nixpacks.toml"
   },
   "deploy": {
-    "startCommand": "npx tsx mcp-server/http-server.ts",
+    "startCommand": "cd mcp-server && npx tsx http-server.ts",
     "healthcheckPath": "/",
     "restartPolicyType": "ON_FAILURE"
   }
