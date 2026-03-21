@@ -2,6 +2,8 @@ import { getEthUsdPrice } from "../providers/chainlink.js";
 import { getVaultFloor } from "../providers/nftx.js";
 import { buildMintRoute, runGuards, calcFees } from "../providers/router.js";
 import type { RouteStep, FeeBreakdown, GuardResult } from "../providers/router.js";
+import { getAgentTrust } from "../providers/erc8004.js";
+import type { AgentTrustProfile } from "../providers/erc8004.js";
 
 export interface MintInput {
   vault_id: string;
@@ -9,6 +11,7 @@ export interface MintInput {
   slippage_tolerance_bps?: number;
   max_premium_pct?: number;
   simulate_only?: boolean;
+  agent_id?: string;
 }
 
 export interface MintOutput {
@@ -23,6 +26,7 @@ export interface MintOutput {
   effective_rate_pct: number;
   guards: GuardResult[];
   reason: string;
+  agent_trust: AgentTrustProfile;
 }
 
 export async function mintFromUsdt(input: MintInput): Promise<MintOutput> {
@@ -32,7 +36,10 @@ export async function mintFromUsdt(input: MintInput): Promise<MintOutput> {
     slippage_tolerance_bps = 50,
     max_premium_pct = 2.0,
     simulate_only = true,
+    agent_id = "anonymous",
   } = input;
+
+  const agent_trust = await getAgentTrust(agent_id);
 
   const ethPrice = await getEthUsdPrice();
   const { floor_eth, premium_pct } = await getVaultFloor(vault_id);
@@ -53,6 +60,7 @@ export async function mintFromUsdt(input: MintInput): Promise<MintOutput> {
       effective_rate_pct: 0,
       guards,
       reason: failed.message,
+      agent_trust,
     };
   }
 
@@ -72,6 +80,7 @@ export async function mintFromUsdt(input: MintInput): Promise<MintOutput> {
     fees,
     effective_rate_pct: fees.total_fee_pct,
     guards,
+    agent_trust,
     reason: simulate_only
       ? `Simulation complete. ${vault_tokens_expected.toFixed(4)} vault tokens for $${amount_usdt} USDT. Set simulate_only: false to execute.`
       : `Ready to execute mint of ${vault_tokens_expected.toFixed(4)} ${vault_id} tokens.`,
