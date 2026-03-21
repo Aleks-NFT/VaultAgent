@@ -1,6 +1,6 @@
-import { getEthUsdPrice } from "../providers/chainlink";
-import { getVaultFloor } from "../providers/nftx";
-import { VAULT_IDS } from "../config/fee-stack";
+import { getEthUsdPrice } from "../providers/chainlink.js";
+import { getVaultFloor } from "../providers/nftx.js";
+import { VAULT_IDS } from "../config/fee-stack.js";
 
 export interface PremiumScanInput {
   max_premium_pct?: number;

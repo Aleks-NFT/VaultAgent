@@ -1,7 +1,7 @@
-import { getEthUsdPrice } from "../providers/chainlink";
-import { quoteUsdtToWeth } from "../providers/oneinch";
-import { getVaultFloor } from "../providers/nftx";
-import { FEE_STACK, GUARDS, VAULT_IDS } from "../config/fee-stack";
+import { getEthUsdPrice } from "../providers/chainlink.js";
+import { quoteUsdtToWeth } from "../providers/oneinch.js";
+import { getVaultFloor } from "../providers/nftx.js";
+import { FEE_STACK, GUARDS, VAULT_IDS } from "../config/fee-stack.js";
 
 export interface SimulateInput {
   vault_id: string;

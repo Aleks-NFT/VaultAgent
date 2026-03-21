@@ -1,8 +1,8 @@
-import { QuoteInput, QuoteOutput } from "./types";
-import { FEE_STACK, GUARDS, VAULT_IDS } from "../config/fee-stack";
-import { getEthUsdPrice } from "../providers/chainlink";
-import { quoteUsdtToWeth } from "../providers/oneinch";
-import { getVaultFloor } from "../providers/nftx";
+import type { QuoteInput, QuoteOutput } from "./types.js";
+import { FEE_STACK, GUARDS, VAULT_IDS } from "../config/fee-stack.js";
+import { getEthUsdPrice } from "../providers/chainlink.js";
+import { quoteUsdtToWeth } from "../providers/oneinch.js";
+import { getVaultFloor } from "../providers/nftx.js";
 export async function quoteInUsdt(input: QuoteInput): Promise<QuoteOutput> {
   const vaultAddress = VAULT_IDS[input.vault_id];
   if (!vaultAddress) throw new Error(`Unknown vault_id: ${input.vault_id}`);

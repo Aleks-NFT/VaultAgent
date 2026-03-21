@@ -1,9 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { quoteInUsdt } from "./tools/quote_in_usdt";
-import { simulateStableRoute } from "./tools/simulate_stable_route";
-import { scanPremiumInUsd } from "./tools/scan_premium_in_usd";
+import { quoteInUsdt } from "./tools/quote_in_usdt.js";
+import { simulateStableRoute } from "./tools/simulate_stable_route.js";
+import { scanPremiumInUsd } from "./tools/scan_premium_in_usd.js";
 
 const server = new McpServer({ name: "AgentVault", version: "0.2.0" });
 
