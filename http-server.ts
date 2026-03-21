@@ -29,7 +29,7 @@ app.post("/scan/free", async (req, res) => {
   res.json(result);
 });
 // Free premium scan for internal dashboard (no x402) — MUST be before paymentMiddleware
-app.post("/scan/premium/free", async (req, res) => {
+app.post("/scan-premium-free", async (req, res) => {
   const result = await scanPremiumInUsd(req.body ?? {});
   res.json(result);
 });
