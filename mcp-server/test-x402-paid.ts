@@ -12,7 +12,8 @@ const body = {
   minarbusdt: 30,
 }
 
-const res1 = await fetch(`${PRODURL}/scanpremium`, {
+const res1 = await fetch(`${PRODURL}//scan/premium
+, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(body),
