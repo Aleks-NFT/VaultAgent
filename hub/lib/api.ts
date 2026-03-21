@@ -19,7 +19,7 @@ export interface ScanResult {
 }
 
 export async function scanVaults(): Promise<ScanResult> {
-  const res = await fetch(`${BASE}/scan`, {
+  const res = await fetch(`${BASE}/scan/free`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({}),

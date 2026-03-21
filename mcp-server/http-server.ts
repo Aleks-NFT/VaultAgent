@@ -7,6 +7,12 @@ import { scanPremiumInUsd } from "./tools/scan_premium_in_usd.js";
 
 const app = express();
 app.use(express.json());
+app.use((_req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
 
 const PAY_TO = process.env.WALLET_ADDRESS ?? "0x0000000000000000000000000000000000000000";
 const PORT   = process.env.HTTP_PORT ?? 4021;
@@ -57,6 +63,13 @@ app.get("/", (_req, res) => {
     },
     execution: "via MCP tools mint_from_usdt / redeem_to_usdt (0.65% round-trip)",
   });
+});
+
+
+// Free scan for internal dashboard (no x402)
+app.post("/scan/free", async (req, res) => {
+  const result = await scanPremiumInUsd(req.body ?? {});
+  res.json(result);
 });
 
 app.listen(PORT, () => {
