@@ -90,19 +90,4 @@ app.post("/scan/premium", async (req, res) => {
   const result = await scanPremiumInUsd(req.body ?? {});
   res.json(result);
 });
-
-// Free scan for internal dashboard (no x402)
-app.post("/scan/free", async (req, res) => {
-  const result = await scanPremiumInUsd(req.body ?? {});
-  res.json(result);
-});
-
-// Free premium scan for internal dashboard (no x402)
-app.post("/scan/premium/free", async (req, res) => {
-  const result = await scanPremiumInUsd(req.body ?? {});
-  res.json(result);
-});
-
-app.listen(PORT, () => {
-  console.log(`AgentVault HTTP x402 server on http://localhost:${PORT}`);
 });
