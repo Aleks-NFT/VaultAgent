@@ -10,8 +10,10 @@ export interface ScanInput {
 export interface X402Accept {
   scheme: string
   network: string
-  price: string
+  price?: string
+  amount?: string
   payTo: string
+  asset?: string
 }
 
 export interface X402Challenge {
@@ -36,7 +38,23 @@ async function postJson<T>(endpoint: string, body: unknown): Promise<X402Result<
   }
 
   if (res.status === 402) {
-    return { ok: false, status: 402, challenge: await res.json() as X402Challenge }
+    const header =
+      res.headers.get('payment-required') ??
+      res.headers.get('PAYMENT-REQUIRED')
+
+    if (header) {
+      const decoded = JSON.parse(
+        Buffer.from(header, 'base64').toString('utf-8')
+      ) as X402Challenge
+
+      return { ok: false, status: 402, challenge: decoded }
+    }
+
+    try {
+      return { ok: false, status: 402, challenge: await res.json() as X402Challenge }
+    } catch {
+      return { ok: false, status: 402, challenge: { accepts: [] } }
+    }
   }
 
   return {
