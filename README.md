@@ -63,3 +63,11 @@ VaultAgent is the execution engine. AgentHUB is the terminal. Together: an OS fo
 
 ---
 *MCP v0.2.0 · 3 tools · Base L2 target · MIT License*
+
+## Deploy notes
+
+- Railway service root: `mcp-server`
+- Deploy command:
+  - `cd /workspaces/AgentVault/mcp-server`
+  - `railway up --detach`
+- Do not deploy this Railway service from repo root.
