@@ -26,7 +26,7 @@ export interface PremiumScanOutput {
 }
 
 export async function scanPremiumInUsd(input: PremiumScanInput = {}): Promise<PremiumScanOutput> {
-  const { max_premium_pct = 2.0, min_arb_usdt = 50 } = input;
+  const { max_premium_pct = 1.5, min_arb_usdt = 50 } = input;
 
   const ethPrice = await getEthUsdPrice();
 
