@@ -64,7 +64,8 @@ app.get("/", (_req, res) => {
     x402: true,
     pricing: {
       "POST /quote":         "$0.001 USDC",
-      "POST /scan":          "$0.001 USDC",
+      "POST /scan": "$0.001 USDC",
+      "POST /scan/premium": "$0.001 USDC",
       "POST /scan/premium":  "$0.001 USDC",
     },
     execution: "via MCP tools mint_from_usdt / redeem_to_usdt (0.65% round-trip)",

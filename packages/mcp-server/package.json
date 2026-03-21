@@ -15,6 +15,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "viem": "^2.47.2",
     "zod": "^3.25.76"
   },
@@ -27,7 +29,14 @@
     "node": ">=18.0.0"
   },
   "keywords": [
-    "mcp", "nftx", "nft", "liquidity", "web3", "defi", "ethereum", "ai-agent"
+    "mcp",
+    "nftx",
+    "nft",
+    "liquidity",
+    "web3",
+    "defi",
+    "ethereum",
+    "ai-agent"
   ],
   "author": "Aleks-NFT",
   "license": "MIT",
