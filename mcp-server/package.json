@@ -17,11 +17,13 @@
     "@x402/core": "^2.7.0",
     "@x402/evm": "^2.7.0",
     "@x402/express": "^2.7.0",
+    "@x402/fetch": "^2.7.0",
     "axios": "^1.13.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
+    "viem": "^2.47.6",
     "zod": "^4.3.6"
   },
   "devDependencies": {

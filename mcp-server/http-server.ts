@@ -14,7 +14,7 @@ app.use((_req, res, next) => {
   next();
 });
 
-const PAY_TO = process.env.WALLET_ADDRESS ?? "0x0000000000000000000000000000000000000000";
+const PAY_TO = process.env.WALLET_ADDRESS ?? "0x80A53D4b84F00EB331eda1D61042b2dc05fFA47d";
 const PORT   = process.env.PORT ?? process.env.HTTP_PORT ?? 4021;
 
 // x402 setup — Base Sepolia testnet
@@ -72,13 +72,12 @@ app.post("/scan", async (req, res) => {
 app.get("/", (_req, res) => {
   res.json({
     name: "AgentVault Intelligence API",
-    version: "0.3.0",
+    version: "0.4.0",
     x402: true,
     pricing: {
-      "POST /quote":         "$0.001 USDC",
+      "POST /quote": "$0.001 USDC",
       "POST /scan": "$0.001 USDC",
       "POST /scan/premium": "$0.001 USDC",
-      "POST /scan/premium":  "$0.001 USDC",
     },
     execution: "via MCP tools mint_from_usdt / redeem_to_usdt (0.65% round-trip)",
   });
@@ -88,7 +87,7 @@ app.get("/", (_req, res) => {
 app.get("/health", (_req, res) => {
   res.json({
     status: "ok",
-    version: "0.3.0",
+    version: "0.4.0",
     uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
   });
