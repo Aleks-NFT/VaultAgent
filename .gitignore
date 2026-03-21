@@ -6,3 +6,8 @@ dist/
 deployments/
 cache/
 artifacts/
+# Foundry
+contracts/lib/
+contracts/out/
+contracts/cache/
+contracts/.env
